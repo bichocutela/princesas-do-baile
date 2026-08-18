@@ -1,0 +1,219 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, BookOpen, RotateCcw, Sparkles, X } from "lucide-react";
+import { createGameScene, type GameHandle } from "@/game/scene";
+import { Engine } from "@babylonjs/core/Engines/engine";
+import { getLevel, LEVELS } from "@/game/levels";
+import type { GameSnapshot } from "@/game/types";
+
+const LOGO_URL = "/manus-storage/princesas-optical-logo_714ccbeb.png";
+const STAGE_URL = "/manus-storage/princesas-optical-stage_bae2c755.png";
+
+const initialSnapshot: GameSnapshot = {
+  level: getLevel(1),
+  currentNodeId: "start",
+  rotation: 0,
+  switchOn: false,
+  lightOn: false,
+  completed: false,
+  highestUnlocked: 1,
+  completedLevelIds: [],
+  message: "O baile ainda espera. Procure uma passagem que faça sentido de outro ângulo.",
+};
+
+export default function GameCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const handleRef = useRef<GameHandle | null>(null);
+  const startedRef = useRef(false);
+  const [snapshot, setSnapshot] = useState<GameSnapshot>(initialSnapshot);
+  const isDemo = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("demo");
+  const requestedDemoLevel = typeof window !== "undefined" ? Number(new URLSearchParams(window.location.search).get("level") ?? "1") : 1;
+  const demoLevel = Number.isInteger(requestedDemoLevel) ? Math.max(1, Math.min(40, requestedDemoLevel)) : 1;
+  const [started, setStarted] = useState(isDemo);
+  const [levelsOpen, setLevelsOpen] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || startedRef.current) return;
+    startedRef.current = true;
+    const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, adaptToDeviceRatio: true });
+    let disposed = false;
+
+    createGameScene(
+      engine,
+      canvas,
+      (nextSnapshot) => {
+        if (!disposed) setSnapshot(nextSnapshot);
+      },
+      isDemo ? demoLevel : 1,
+    ).then((handle) => {
+      if (disposed) {
+        handle.dispose();
+        return;
+      }
+      handleRef.current = handle;
+      engine.runRenderLoop(() => handle.scene.render());
+      if (isDemo) {
+        const steps = [
+          window.setTimeout(() => handle.moveFirst(), 500),
+          window.setTimeout(() => handle.rotate(1), 1050),
+          window.setTimeout(() => handle.moveFirst(), 1650),
+        ];
+        window.setTimeout(() => steps.forEach((step) => window.clearTimeout(step)), 2500);
+      }
+    });
+
+    const onResize = () => engine.resize();
+    window.addEventListener("resize", onResize);
+    return () => {
+      disposed = true;
+      window.removeEventListener("resize", onResize);
+      handleRef.current?.dispose();
+      handleRef.current = null;
+      engine.dispose();
+      startedRef.current = false;
+    };
+  }, []);
+
+  const progressLabel = useMemo(
+    () => `${snapshot.completedLevelIds.length.toString().padStart(2, "0")} / 40 convites`,
+    [snapshot.completedLevelIds.length],
+  );
+
+  const enterGame = () => {
+    setStarted(true);
+    handleRef.current?.loadLevel(snapshot.highestUnlocked);
+  };
+
+  const chooseLevel = (levelId: number) => {
+    if (levelId > snapshot.highestUnlocked) return;
+    setStarted(true);
+    setLevelsOpen(false);
+    handleRef.current?.loadLevel(levelId);
+  };
+
+  return (
+    <main className="game-shell" style={{ "--stage-url": `url(${STAGE_URL})` } as React.CSSProperties}>
+      <canvas ref={canvasRef} className="game-canvas" aria-label="Diorama interativo de Princesas do Baile" />
+
+      {!started ? (
+        <section className="title-card" aria-label="Início de Princesas do Baile">
+          <div className="title-card__glow" />
+          <img className="title-card__logo" src={LOGO_URL} alt="Logo de Princesas do Baile" />
+          <p className="title-card__eyebrow">JOGO GRATUITO · 40 MONUMENTOS</p>
+          <h1>O baile ainda espera.</h1>
+          <p className="title-card__copy">
+            Gire o olhar, una passagens impossíveis e devolva os convites perdidos à cidade suspensa.
+          </p>
+          <button className="button button--primary" type="button" onClick={enterGame}>
+            <Sparkles size={18} aria-hidden="true" />
+            Entrar no monumento
+          </button>
+          <p className="title-card__hint">Sem cronômetro, sem compras, sem punição por recomeçar.</p>
+        </section>
+      ) : null}
+
+      {started ? (
+        <>
+          <header className="game-header">
+            <div className="game-header__identity">
+              <img src={LOGO_URL} alt="" className="game-header__mark" />
+              <div>
+                <p>PRINCESAS DO BAILE · ATO {snapshot.level.act} · FASE {snapshot.level.id.toString().padStart(2, "0")}</p>
+                <h2>{snapshot.level.title}</h2>
+              </div>
+            </div>
+            <div className="game-header__actions">
+              <span className="progress-pill">{progressLabel}</span>
+              <button className="icon-button" type="button" aria-label="Escolher fase" onClick={() => setLevelsOpen(true)}>
+                <BookOpen size={19} />
+              </button>
+              <button className="icon-button" type="button" aria-label="Recomeçar fase" onClick={() => handleRef.current?.restart()}>
+                <RotateCcw size={19} />
+              </button>
+            </div>
+          </header>
+
+          <aside className={`story-chip ${snapshot.completed ? "is-concealed" : ""}`}>
+            <span className="story-chip__dot" />
+            <p>{snapshot.level.objective}</p>
+          </aside>
+
+          <section className="control-deck" aria-label="Controles da fase">
+            <button className="control-button" type="button" onClick={() => handleRef.current?.rotate(-1)}>
+              <ArrowLeft size={22} />
+              <span>Girar</span>
+            </button>
+            <button className="control-button control-button--move" type="button" onClick={() => handleRef.current?.moveFirst()}>
+              <span className="control-button__number">{snapshot.rotation + 1}</span>
+              <span>Seguir passagem</span>
+            </button>
+            <button className="control-button" type="button" onClick={() => handleRef.current?.rotate(1)}>
+              <span>Girar</span>
+              <ArrowRight size={22} />
+            </button>
+          </section>
+
+          <p className={`message-strip ${snapshot.completed ? "is-concealed" : ""}`} role="status">{snapshot.message}</p>
+
+          {snapshot.completed ? (
+            <section className="completion-card" aria-live="polite">
+              <p className="completion-card__kicker">CONVITE RECUPERADO</p>
+              <h3>Um novo salão se abre.</h3>
+              <p>O monumento guardou sua memória. Você pode avançar ou revisitar esta rota quando quiser.</p>
+              <div className="completion-card__actions">
+                {snapshot.level.id < 40 ? (
+                  <button className="button button--primary" type="button" onClick={() => handleRef.current?.nextLevel()}>
+                    Próxima fase
+                    <ArrowRight size={18} />
+                  </button>
+                ) : (
+                  <button className="button button--primary" type="button" onClick={() => setLevelsOpen(true)}>
+                    Rever os monumentos
+                    <BookOpen size={18} />
+                  </button>
+                )}
+                <button className="button button--quiet" type="button" onClick={() => handleRef.current?.restart()}>
+                  Jogar de novo
+                </button>
+              </div>
+            </section>
+          ) : null}
+        </>
+      ) : null}
+
+      {levelsOpen ? (
+        <section className="level-drawer" role="dialog" aria-modal="true" aria-label="Mapa de monumentos">
+          <div className="level-drawer__topline">
+            <div>
+              <p className="title-card__eyebrow">MAPA DO BAILE</p>
+              <h2>Quarenta convites</h2>
+            </div>
+            <button className="icon-button icon-button--light" type="button" aria-label="Fechar mapa" onClick={() => setLevelsOpen(false)}>
+              <X size={18} />
+            </button>
+          </div>
+          <p className="level-drawer__intro">Cada bloco apresenta uma nova maneira de tornar a arquitetura possível.</p>
+          <div className="level-grid">
+            {LEVELS.map((level) => {
+              const isUnlocked = level.id <= snapshot.highestUnlocked;
+              const isCompleted = snapshot.completedLevelIds.includes(level.id);
+              return (
+                <button
+                  className={`level-card ${isUnlocked ? "level-card--open" : ""} ${isCompleted ? "level-card--complete" : ""}`}
+                  disabled={!isUnlocked}
+                  key={level.id}
+                  type="button"
+                  onClick={() => chooseLevel(level.id)}
+                >
+                  <span>{level.id.toString().padStart(2, "0")}</span>
+                  <strong>{level.title}</strong>
+                  <em>{isCompleted ? "Convite salvo" : isUnlocked ? `Ato ${level.act}` : "Em breve"}</em>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+    </main>
+  );
+}
