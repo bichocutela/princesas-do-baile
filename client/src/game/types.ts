@@ -1,6 +1,6 @@
 export type Rotation = 0 | 1 | 2 | 3;
 
-export type NodeKind = "start" | "path" | "goal" | "switch" | "portal";
+export type NodeKind = "start" | "path" | "goal" | "switch" | "portal" | "companion";
 
 export type PuzzleNode = {
   id: string;
@@ -25,6 +25,7 @@ export type PuzzleLevel = {
   act: 1 | 2 | 3 | 4 | 5;
   module: number;
   moduleTitle: string;
+  symbol: string;
   companionState: "alone" | "companioned" | "lost";
   title: string;
   subtitle: string;

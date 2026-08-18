@@ -29,7 +29,11 @@ describe("catálogo de monumentos", () => {
   it("preserva o arco de Íris entre companhia e perda", () => {
     expect(LEVELS[79]?.companionState).toBe("alone");
     expect(LEVELS[80]?.companionState).toBe("companioned");
+    expect(LEVELS[80]?.companionState).toBe("companioned");
+    expect(LEVELS[80]?.nodes.some((node) => node.kind === "companion" && node.label === "Íris")).toBe(true);
     expect(LEVELS[119]?.companionState).toBe("companioned");
+    expect(LEVELS[119]?.nodes.some((node) => node.kind === "companion")).toBe(true);
     expect(LEVELS[120]?.companionState).toBe("lost");
+    expect(LEVELS[120]?.nodes.some((node) => node.kind === "companion")).toBe(false);
   });
 });

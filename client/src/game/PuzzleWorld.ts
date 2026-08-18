@@ -179,7 +179,7 @@ export class PuzzleWorld {
     tower.material = towerMaterial;
 
     const topColor =
-      node.kind === "goal" ? COLORS.gold : node.kind === "switch" ? COLORS.lagoon : node.kind === "portal" ? COLORS.plum : COLORS.porcelain;
+      node.kind === "goal" ? COLORS.gold : node.kind === "switch" ? COLORS.lagoon : node.kind === "portal" ? COLORS.plum : node.kind === "companion" ? COLORS.coral : COLORS.porcelain;
     const topMaterial = this.material(`top-${node.id}`, topColor, 1);
     const top = MeshBuilder.CreateCylinder(`node-${node.id}`, { height: 0.2, diameter: 1.1, tessellation: 24 }, this.scene);
     top.parent = parent;
@@ -187,6 +187,17 @@ export class PuzzleWorld {
     top.material = topMaterial;
     top.isPickable = true;
     top.metadata = { puzzleNodeId: node.id };
+
+    if (node.kind === "companion") {
+      const companionMaterial = this.material(`companion-${node.id}`, COLORS.coral, 1);
+      const companion = MeshBuilder.CreateSphere(`companion-${node.id}`, { diameter: .42, segments: 16 }, this.scene);
+      companion.parent = parent;
+      companion.position = position.add(new Vector3(0, .55, 0));
+      companion.material = companionMaterial;
+      companion.isPickable = true;
+      companion.metadata = { puzzleNodeId: node.id };
+      this.created.push(companion, companionMaterial);
+    }
 
     if (node.kind === "goal" || node.kind === "portal") {
       const archMaterial = this.material(`arch-${node.id}`, node.kind === "goal" ? COLORS.gold : COLORS.plum, 1);

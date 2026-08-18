@@ -128,6 +128,6 @@ export class PuzzleSession {
   }
 
   goToNextLevel() {
-    this.loadLevel(Math.min(40, this.level.id + 1));
+    this.loadLevel(Math.min(170, this.level.id + 1));
   }
 }

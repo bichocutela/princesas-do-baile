@@ -3,6 +3,8 @@ import { getModuleForLevel, MODULES, PHASES_PER_MODULE, TOTAL_LEVELS } from "./m
 
 type Position = [number, number, number];
 
+const moduleSymbols = ["◌", "⌁", "△", "◇", "✦", "╳", "∿", "◈", "◉", "☾", "▧", "✧", "⊙", "∴", "∞", "※", "✺"] as const;
+
 const phaseNames = [
   "A primeira marca", "O ângulo oculto", "Entre duas paredes", "O gesto repetido", "A passagem estreita",
   "A sala sem centro", "O desenho na poeira", "A escada que recorda", "A vista impossível", "O convite selado",
@@ -37,6 +39,7 @@ function createLevel(id: number): PuzzleLevel {
   const [startPos, switchPos, middlePos, portalPos, goalPos] = frame.map((position, index) => varied(position, id, 1 + index * .08));
   const shadowPos = varied([portalPos[0] - .3, portalPos[1] + .65, portalPos[2] + 1.4], id, .7);
   const portalExitPos = varied([portalPos[0] + 1.1, portalPos[1] + .55, portalPos[2] - 1.25], id, .65);
+  const companionPos = varied([middlePos[0] + .4, middlePos[1] + .9, middlePos[2] + .7], id, .55);
   const r0 = initialRotation;
   const r1 = asRotation(r0 + 1);
   const r2 = asRotation(r0 + 2);
@@ -62,9 +65,17 @@ function createLevel(id: number): PuzzleLevel {
   }));
 
   if (needsPortal) {
+    if (module.companionState === "companioned") {
+      nodes.push(point("companion", companionPos, "companion", { label: "Íris" }));
+    }
     nodes.push(point("portal-entry", portalPos, "portal", { portalTargetId: "portal-exit" }));
     nodes.push(point("portal-exit", portalExitPos, "portal", { portalTargetId: "portal-entry" }));
-    paths.push(route("arco-entrada", "middle", "portal-entry", [r2], { requiresSwitch: true, kind: "portal" }));
+    if (module.companionState === "companioned") {
+      paths.push(route("íris-aponta", "middle", "companion", [r2], { requiresSwitch: true, kind: "portal" }));
+      paths.push(route("íris-abre-o-arco", "companion", "portal-entry", [r3], { requiresSwitch: true, kind: "portal" }));
+    } else {
+      paths.push(route("arco-entrada", "middle", "portal-entry", [r2], { requiresSwitch: true, kind: "portal" }));
+    }
     if (needsShadow) {
       nodes.push(point("shadow", shadowPos, "path"));
       paths.push(route("véu-da-sombra", "portal-exit", "shadow", [r3], { requiresSwitch: true, requiresLight: true, kind: "shadow" }));
@@ -73,9 +84,16 @@ function createLevel(id: number): PuzzleLevel {
       paths.push(route("arco-saída", "portal-exit", "goal", [r3], { requiresSwitch: true, kind: "portal" }));
     }
   } else if (needsShadow) {
-    nodes.push(point("shadow", shadowPos, "path"));
-    paths.push(route("sombra-sólida", "middle", "shadow", [r2], { requiresSwitch: true, requiresLight: true, kind: "shadow" }));
-    paths.push(route("saída-na-sombra", "shadow", "goal", [r3], { requiresSwitch: true, requiresLight: true, kind: "shadow" }));
+    if (module.companionState === "companioned") {
+      nodes.push(point("companion", companionPos, "companion", { label: "Íris" }));
+      paths.push(route("íris-aponta-para-a-luz", "middle", "companion", [r2], { requiresSwitch: true, kind: "shadow" }));
+      nodes.push(point("shadow", shadowPos, "path"));
+      paths.push(route("íris-entra-na-sombra", "companion", "shadow", [r3], { requiresSwitch: true, requiresLight: true, kind: "shadow" }));
+    } else {
+      nodes.push(point("shadow", shadowPos, "path"));
+      paths.push(route("sombra-sólida", "middle", "shadow", [r2], { requiresSwitch: true, requiresLight: true, kind: "shadow" }));
+    }
+    paths.push(route("saída-na-sombra", "shadow", "goal", [r0], { requiresSwitch: true, requiresLight: true, kind: "shadow" }));
   } else {
     paths.push(route("passagem-final", "middle", "goal", [r2], { requiresSwitch: needsBridge, kind: needsBridge ? "bridge" : undefined }));
   }
@@ -85,6 +103,7 @@ function createLevel(id: number): PuzzleLevel {
     act: module.act,
     module: module.id,
     moduleTitle: module.title,
+    symbol: moduleSymbols[module.id - 1] ?? "◌",
     companionState: module.companionState,
     title: `${module.title} · ${phaseNames[phase - 1]}`,
     subtitle: module.subtitle,

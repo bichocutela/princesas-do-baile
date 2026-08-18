@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, RotateCcw, Sparkles, X } from "lucide-react";
 import { createGameScene, type GameHandle } from "@/game/scene";
 import { Engine } from "@babylonjs/core/Engines/engine";
-import { getLevel, LEVELS } from "@/game/levels";
+import { getLevel, LEVELS, MODULES } from "@/game/levels";
 import type { GameSnapshot } from "@/game/types";
 
 const LOGO_URL = "/manus-storage/princesas-optical-logo_714ccbeb.png";
@@ -29,7 +29,7 @@ export default function GameCanvas() {
   const [snapshot, setSnapshot] = useState<GameSnapshot>(initialSnapshot);
   const isDemo = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("demo");
   const requestedDemoLevel = typeof window !== "undefined" ? Number(new URLSearchParams(window.location.search).get("level") ?? "1") : 1;
-  const demoLevel = Number.isInteger(requestedDemoLevel) ? Math.max(1, Math.min(40, requestedDemoLevel)) : 1;
+  const demoLevel = Number.isInteger(requestedDemoLevel) ? Math.max(1, Math.min(170, requestedDemoLevel)) : 1;
   const [started, setStarted] = useState(isDemo);
   const [levelsOpen, setLevelsOpen] = useState(false);
 
@@ -143,7 +143,7 @@ export default function GameCanvas() {
             <div className="game-header__identity">
               <img src={LOGO_URL} alt="" className="game-header__mark" />
               <div>
-                <p>PRINCESAS DO BAILE · MÓDULO {snapshot.level.module} · FASE {snapshot.level.id.toString().padStart(3, "0")}</p>
+                <p><span className="module-symbol" aria-label={`Símbolo do módulo ${snapshot.level.module}`}>{snapshot.level.symbol}</span> PRINCESAS DO BAILE · MÓDULO {snapshot.level.module} · FASE {snapshot.level.id.toString().padStart(3, "0")}</p>
                 <h2>{snapshot.level.title}</h2>
               </div>
             </div>
@@ -229,22 +229,40 @@ export default function GameCanvas() {
             </button>
           </div>
           <p className="level-drawer__intro">Cada bloco apresenta uma nova maneira de tornar a arquitetura possível.</p>
-          <div className="level-grid">
-            {LEVELS.map((level) => {
-              const isUnlocked = level.id <= snapshot.highestUnlocked;
-              const isCompleted = snapshot.completedLevelIds.includes(level.id);
+          <div className="module-list">
+            {MODULES.map((module) => {
+              const moduleLevels = LEVELS.filter((level) => level.module === module.id);
+              const moduleUnlocked = moduleLevels.some((level) => level.id <= snapshot.highestUnlocked);
               return (
-                <button
-                  className={`level-card ${isUnlocked ? "level-card--open" : ""} ${isCompleted ? "level-card--complete" : ""}`}
-                  disabled={!isUnlocked}
-                  key={level.id}
-                  type="button"
-                  onClick={() => chooseLevel(level.id)}
-                >
-                  <span>{level.id.toString().padStart(2, "0")}</span>
-                  <strong>{level.title}</strong>
-                  <em>{isCompleted ? "Convite salvo" : isUnlocked ? `Ato ${level.act}` : "Em breve"}</em>
-                </button>
+                <section className={`module-section ${moduleUnlocked ? "module-section--open" : ""}`} key={module.id}>
+                  <div className="module-section__heading">
+                    <div>
+                      <p>MÓDULO {module.id.toString().padStart(2, "0")} · ATO {module.act}</p>
+                      <h3>{module.title}</h3>
+                    </div>
+                    <span>{moduleLevels.filter((level) => snapshot.completedLevelIds.includes(level.id)).length}/10</span>
+                  </div>
+                  <p className="module-section__clue">{module.subtitle}</p>
+                  <div className="level-grid">
+                    {moduleLevels.map((level) => {
+                      const isUnlocked = level.id <= snapshot.highestUnlocked;
+                      const isCompleted = snapshot.completedLevelIds.includes(level.id);
+                      return (
+                        <button
+                          className={`level-card ${isUnlocked ? "level-card--open" : ""} ${isCompleted ? "level-card--complete" : ""}`}
+                          disabled={!isUnlocked}
+                          key={level.id}
+                          type="button"
+                          onClick={() => chooseLevel(level.id)}
+                        >
+                          <span>{level.id.toString().padStart(3, "0")}</span>
+                          <strong>{level.title.replace(`${module.title} · `, "")}</strong>
+                          <em>{isCompleted ? "Convite salvo" : isUnlocked ? `Fase ${((level.id - 1) % 10) + 1}/10` : "Bloqueado"}</em>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
               );
             })}
           </div>
