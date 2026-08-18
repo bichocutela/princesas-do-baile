@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Princesas do Baile</string>
+    <string name="title_activity_main">Princesas do Baile</string>
+    <string name="package_name">com.princesasdobaile.app</string>
+    <string name="custom_url_scheme">com.princesasdobaile.app</string>
+</resources>

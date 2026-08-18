@@ -11,19 +11,19 @@ describe("progresso local de Princesas do Baile", () => {
     });
   });
 
-  it("ignora valores inválidos e limita o avanço às quarenta fases", () => {
+  it("ignora valores inválidos e limita o avanço às cento e setenta fases", () => {
     expect(
       normalizeProgress({
-        highestUnlocked: 91,
-        completedLevelIds: [1, 1, 0, 41, 12],
-        collectedInvitationIds: [2, "3", 40],
-        lastPlayedLevelId: 88,
+        highestUnlocked: 900,
+        completedLevelIds: [1, 1, 0, 41, 171, 12],
+        collectedInvitationIds: [2, "3", 170],
+        lastPlayedLevelId: 188,
       }),
     ).toMatchObject({
-      highestUnlocked: 40,
-      completedLevelIds: [1, 12],
-      collectedInvitationIds: [2, 40],
-      lastPlayedLevelId: 40,
+      highestUnlocked: 170,
+      completedLevelIds: [1, 12, 41],
+      collectedInvitationIds: [2, 170],
+      lastPlayedLevelId: 170,
     });
   });
 

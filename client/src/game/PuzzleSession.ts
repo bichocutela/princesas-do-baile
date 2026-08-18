@@ -32,6 +32,8 @@ export class PuzzleSession {
       highestUnlocked: this.progress.highestUnlocked,
       completedLevelIds: this.progress.completedLevelIds,
       message: this.message,
+      companionState: this.level.companionState,
+      companionName: "Íris",
     };
   }
 

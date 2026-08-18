@@ -23,6 +23,9 @@ export type PuzzlePath = {
 export type PuzzleLevel = {
   id: number;
   act: 1 | 2 | 3 | 4 | 5;
+  module: number;
+  moduleTitle: string;
+  companionState: "alone" | "companioned" | "lost";
   title: string;
   subtitle: string;
   initialRotation: Rotation;
@@ -51,4 +54,6 @@ export type GameSnapshot = {
   highestUnlocked: number;
   completedLevelIds: number[];
   message: string;
+  companionState: "alone" | "companioned" | "lost";
+  companionName: string;
 };

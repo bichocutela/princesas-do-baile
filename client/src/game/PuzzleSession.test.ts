@@ -3,7 +3,7 @@ import { PuzzleSession } from "./PuzzleSession";
 
 describe("sessão de quebra-cabeça", () => {
   it("conclui uma fase do quinto ato ao combinar alavanca, portal e sombra", () => {
-    const session = new PuzzleSession(33, true);
+    const session = new PuzzleSession(145, true);
 
     session.moveFirstAvailable();
     expect(session.snapshot()).toMatchObject({ currentNodeId: "switch", switchOn: true, completed: false });
@@ -21,12 +21,13 @@ describe("sessão de quebra-cabeça", () => {
     expect(session.snapshot().currentNodeId).toBe("shadow");
 
     session.rotate(1);
+    session.rotate(1);
     session.moveFirstAvailable();
     expect(session.snapshot()).toMatchObject({ currentNodeId: "goal", completed: true });
   });
 
   it("acende a lanterna antes de liberar as rotas de sombra", () => {
-    const session = new PuzzleSession(25, true);
+    const session = new PuzzleSession(105, true);
     expect(session.snapshot().lightOn).toBe(false);
     session.moveFirstAvailable();
     expect(session.snapshot()).toMatchObject({ currentNodeId: "switch", lightOn: true, switchOn: true });

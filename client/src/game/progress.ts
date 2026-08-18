@@ -12,7 +12,7 @@ export const createDefaultProgress = (): LocalProgress => ({
 
 const uniqueValidIds = (value: unknown): number[] => {
   if (!Array.isArray(value)) return [];
-  return Array.from(new Set(value.filter((id): id is number => Number.isInteger(id) && id >= 1 && id <= 40))).sort(
+  return Array.from(new Set(value.filter((id): id is number => Number.isInteger(id) && id >= 1 && id <= 170))).sort(
     (a, b) => a - b,
   );
 };
@@ -25,17 +25,17 @@ export function normalizeProgress(value: unknown): LocalProgress {
   const highestFromCompletion = completedLevelIds.length ? Math.max(...completedLevelIds) + 1 : 1;
   const highestUnlocked = Math.max(
     1,
-    Math.min(40, Number.isInteger(source.highestUnlocked) ? Number(source.highestUnlocked) : highestFromCompletion),
+    Math.min(170, Number.isInteger(source.highestUnlocked) ? Number(source.highestUnlocked) : highestFromCompletion),
   );
 
   return {
-    highestUnlocked: Math.max(highestUnlocked, Math.min(40, highestFromCompletion)),
+    highestUnlocked: Math.max(highestUnlocked, Math.min(170, highestFromCompletion)),
     completedLevelIds,
     collectedInvitationIds,
     soundEnabled: source.soundEnabled !== false,
     lastPlayedLevelId:
       Number.isInteger(source.lastPlayedLevelId) && Number(source.lastPlayedLevelId) >= 1
-        ? Math.min(40, Number(source.lastPlayedLevelId))
+        ? Math.min(170, Number(source.lastPlayedLevelId))
         : 1,
   };
 }
@@ -64,7 +64,7 @@ export function completeLevel(progress: LocalProgress, levelId: number): LocalPr
     ...progress,
     completedLevelIds,
     collectedInvitationIds,
-    highestUnlocked: Math.max(progress.highestUnlocked, Math.min(40, levelId + 1)),
-    lastPlayedLevelId: Math.min(40, levelId + 1),
+    highestUnlocked: Math.max(progress.highestUnlocked, Math.min(170, levelId + 1)),
+    lastPlayedLevelId: Math.min(170, levelId + 1),
   };
 }

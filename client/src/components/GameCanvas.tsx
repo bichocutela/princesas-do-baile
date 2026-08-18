@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, BookOpen, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, RotateCcw, Sparkles, X } from "lucide-react";
 import { createGameScene, type GameHandle } from "@/game/scene";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { getLevel, LEVELS } from "@/game/levels";
@@ -18,6 +18,8 @@ const initialSnapshot: GameSnapshot = {
   highestUnlocked: 1,
   completedLevelIds: [],
   message: "O baile ainda espera. Procure uma passagem que faça sentido de outro ângulo.",
+  companionState: "alone",
+  companionName: "Íris",
 };
 
 export default function GameCanvas() {
@@ -74,8 +76,31 @@ export default function GameCanvas() {
     };
   }, []);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!started) return;
+      const key = event.key.toLowerCase();
+      if (["arrowleft", "a"].includes(key)) {
+        event.preventDefault();
+        handleRef.current?.rotate(-1);
+      } else if (["arrowright", "d"].includes(key)) {
+        event.preventDefault();
+        handleRef.current?.rotate(1);
+      } else if (["arrowup", "w", " "].includes(key)) {
+        event.preventDefault();
+        handleRef.current?.moveFirst();
+      } else if (["arrowdown", "s"].includes(key)) {
+        event.preventDefault();
+        handleRef.current?.restart();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [started]);
+
   const progressLabel = useMemo(
-    () => `${snapshot.completedLevelIds.length.toString().padStart(2, "0")} / 40 convites`,
+    () => `${snapshot.completedLevelIds.length.toString().padStart(3, "0")} / 170 convites`,
     [snapshot.completedLevelIds.length],
   );
 
@@ -118,7 +143,7 @@ export default function GameCanvas() {
             <div className="game-header__identity">
               <img src={LOGO_URL} alt="" className="game-header__mark" />
               <div>
-                <p>PRINCESAS DO BAILE · ATO {snapshot.level.act} · FASE {snapshot.level.id.toString().padStart(2, "0")}</p>
+                <p>PRINCESAS DO BAILE · MÓDULO {snapshot.level.module} · FASE {snapshot.level.id.toString().padStart(3, "0")}</p>
                 <h2>{snapshot.level.title}</h2>
               </div>
             </div>
@@ -137,19 +162,30 @@ export default function GameCanvas() {
             <span className="story-chip__dot" />
             <p>{snapshot.level.objective}</p>
           </aside>
+          {snapshot.companionState !== "alone" ? (
+            <aside className={`companion-chip companion-chip--${snapshot.companionState}`}>
+              <span className="companion-chip__mark">{snapshot.companionState === "companioned" ? "Í" : "…"}</span>
+              <p>{snapshot.companionState === "companioned" ? `${snapshot.companionName} segue com Lina.` : `${snapshot.companionName} se perdeu entre os monumentos.`}</p>
+            </aside>
+          ) : null}
 
-          <section className="control-deck" aria-label="Controles da fase">
-            <button className="control-button" type="button" onClick={() => handleRef.current?.rotate(-1)}>
-              <ArrowLeft size={22} />
+          <section className="directional-pad" aria-label="Direcional da fase">
+            <button className="dpad-button dpad-button--up" type="button" aria-label="Seguir passagem" onClick={() => handleRef.current?.moveFirst()}>
+              <ArrowUp size={20} />
+              <span>Ir</span>
+            </button>
+            <button className="dpad-button dpad-button--left" type="button" aria-label="Girar para a esquerda" onClick={() => handleRef.current?.rotate(-1)}>
+              <ArrowLeft size={20} />
               <span>Girar</span>
             </button>
-            <button className="control-button control-button--move" type="button" onClick={() => handleRef.current?.moveFirst()}>
-              <span className="control-button__number">{snapshot.rotation + 1}</span>
-              <span>Seguir passagem</span>
-            </button>
-            <button className="control-button" type="button" onClick={() => handleRef.current?.rotate(1)}>
+            <div className="dpad-center" aria-hidden="true">{snapshot.rotation + 1}</div>
+            <button className="dpad-button dpad-button--right" type="button" aria-label="Girar para a direita" onClick={() => handleRef.current?.rotate(1)}>
+              <ArrowRight size={20} />
               <span>Girar</span>
-              <ArrowRight size={22} />
+            </button>
+            <button className="dpad-button dpad-button--down" type="button" aria-label="Recomeçar fase" onClick={() => handleRef.current?.restart()}>
+              <ArrowDown size={20} />
+              <span>Reiniciar</span>
             </button>
           </section>
 
@@ -161,7 +197,7 @@ export default function GameCanvas() {
               <h3>Um novo salão se abre.</h3>
               <p>O monumento guardou sua memória. Você pode avançar ou revisitar esta rota quando quiser.</p>
               <div className="completion-card__actions">
-                {snapshot.level.id < 40 ? (
+                {snapshot.level.id < 170 ? (
                   <button className="button button--primary" type="button" onClick={() => handleRef.current?.nextLevel()}>
                     Próxima fase
                     <ArrowRight size={18} />
@@ -186,7 +222,7 @@ export default function GameCanvas() {
           <div className="level-drawer__topline">
             <div>
               <p className="title-card__eyebrow">MAPA DO BAILE</p>
-              <h2>Quarenta convites</h2>
+              <h2>170 convites</h2>
             </div>
             <button className="icon-button icon-button--light" type="button" aria-label="Fechar mapa" onClick={() => setLevelsOpen(false)}>
               <X size={18} />

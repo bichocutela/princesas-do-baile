@@ -1,27 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { LEVELS } from "./levels";
+import { MODULES } from "./modules";
 
 describe("catálogo de monumentos", () => {
-  it("entrega quarenta fases em cinco atos completos", () => {
-    expect(LEVELS).toHaveLength(40);
-    expect(LEVELS.map((level) => level.act)).toEqual([
-      ...Array(8).fill(1), ...Array(8).fill(2), ...Array(8).fill(3), ...Array(8).fill(4), ...Array(8).fill(5),
-    ]);
+  it("entrega 170 fases organizadas em 17 módulos de dez fases", () => {
+    expect(LEVELS).toHaveLength(170);
+    expect(MODULES).toHaveLength(17);
+    expect(LEVELS[0]?.module).toBe(1);
+    expect(LEVELS[9]?.module).toBe(1);
+    expect(LEVELS[10]?.module).toBe(2);
+    expect(LEVELS[169]?.module).toBe(17);
   });
 
-  it("mantém layouts e assinaturas de rota distintos entre as quarenta fases", () => {
+  it("mantém layouts, títulos e assinaturas de rota distintos", () => {
     const signatures = LEVELS.map((level) =>
-      `${level.nodes.map((node) => `${node.id}:${node.position.join(",")}`).join("|")}::${level.paths.map((path) => `${path.from}-${path.to}-${path.kind ?? "walk"}`).join("|")}`,
+      `${level.title}::${level.nodes.map((node) => `${node.id}:${node.position.join(",")}`).join("|")}::${level.paths.map((path) => `${path.from}-${path.to}-${path.kind ?? "walk"}`).join("|")}`,
     );
-    expect(new Set(signatures).size).toBe(40);
+    expect(new Set(signatures).size).toBe(170);
   });
 
-  it("inclui portais, sombras e combinações no avanço dos atos", () => {
-    expect(LEVELS[16]?.paths.some((path) => path.kind === "portal")).toBe(true);
-    expect(LEVELS[16]?.nodes.some((node) => node.kind === "portal" && node.portalTargetId)).toBe(true);
-    expect(LEVELS[24]?.paths.some((path) => path.kind === "shadow")).toBe(true);
-    expect(LEVELS[24]?.paths.some((path) => path.requiresLight)).toBe(true);
-    expect(LEVELS[32]?.paths.some((path) => path.kind === "portal")).toBe(true);
-    expect(LEVELS[32]?.paths.some((path) => path.kind === "shadow")).toBe(true);
+  it("introduz regras enigmáticas em ordem crescente", () => {
+    expect(LEVELS.slice(0, 30).every((level) => level.paths.every((path) => !path.requiresLight))).toBe(true);
+    expect(LEVELS.slice(70, 100).some((level) => level.paths.some((path) => path.kind === "portal"))).toBe(true);
+    expect(LEVELS.slice(100, 140).some((level) => level.paths.some((path) => path.requiresLight))).toBe(true);
+    expect(LEVELS.slice(140).some((level) => level.paths.some((path) => path.kind === "portal")) && LEVELS.slice(140).some((level) => level.paths.some((path) => path.requiresLight))).toBe(true);
+  });
+
+  it("preserva o arco de Íris entre companhia e perda", () => {
+    expect(LEVELS[79]?.companionState).toBe("alone");
+    expect(LEVELS[80]?.companionState).toBe("companioned");
+    expect(LEVELS[119]?.companionState).toBe("companioned");
+    expect(LEVELS[120]?.companionState).toBe("lost");
   });
 });
