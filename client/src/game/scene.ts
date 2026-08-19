@@ -27,7 +27,7 @@ export async function createGameScene(
   initialLevelId = 1,
 ): Promise<GameHandle> {
   const scene = new Scene(engine);
-  scene.clearColor = new Color4(0.92, 0.72, 0.68, 1);
+  scene.clearColor = new Color4(0, 0, 0, 0);
 
   const isCompactViewport = window.innerWidth < 720;
   const initialRadius = isCompactViewport ? 21 : 16;
@@ -39,10 +39,11 @@ export async function createGameScene(
   camera.attachControl(canvas, false);
 
   const skyLight = new HemisphericLight("sky-light", new Vector3(0.3, 1, -0.2), scene);
-  skyLight.intensity = 1.35;
-  skyLight.diffuse = new Vector3(1, 0.93, 0.83) as unknown as typeof skyLight.diffuse;
+  skyLight.intensity = 1.3;
+  skyLight.diffuse = new Vector3(0.94, 0.9, 0.96) as unknown as typeof skyLight.diffuse;
+  skyLight.groundColor = new Vector3(0.38, 0.32, 0.46) as unknown as typeof skyLight.groundColor;
   const sunLight = new DirectionalLight("sun-light", new Vector3(-0.4, -1, 0.35), scene);
-  sunLight.intensity = 1.45;
+  sunLight.intensity = 1.38;
 
   const session = new PuzzleSession(initialLevelId, initialLevelId > 1);
   let world: PuzzleWorld;

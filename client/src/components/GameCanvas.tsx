@@ -7,6 +7,12 @@ import type { GameSnapshot } from "@/game/types";
 
 const LOGO_URL = "/manus-storage/princesas-optical-logo_714ccbeb.png";
 const STAGE_URL = "/manus-storage/princesas-optical-stage_bae2c755.png";
+const MODULE_BACKDROPS = [
+  ["#263b5b", "#efad89"], ["#224f67", "#9ed5ce"], ["#3c3765", "#e5a1c3"], ["#285955", "#f0bb76"], ["#1d5965", "#ff9e8e"],
+  ["#39445f", "#ce8fb5"], ["#245d76", "#ecc276"], ["#473568", "#ec94c1"], ["#1f5478", "#f6ae80"], ["#453567", "#d899d3"],
+  ["#1c3555", "#ad9ee0"], ["#313a60", "#f2ad8b"], ["#172f4d", "#917db2"], ["#29364f", "#d38f8a"], ["#2b295d", "#d6afe4"],
+  ["#363155", "#c7b0ed"], ["#203d55", "#f1c58d"],
+] as const;
 
 const initialSnapshot: GameSnapshot = {
   level: getLevel(1),
@@ -32,12 +38,13 @@ export default function GameCanvas() {
   const demoLevel = Number.isInteger(requestedDemoLevel) ? Math.max(1, Math.min(170, requestedDemoLevel)) : 1;
   const [started, setStarted] = useState(isDemo);
   const [levelsOpen, setLevelsOpen] = useState(false);
+  const activeBackdrop = MODULE_BACKDROPS[(snapshot.level.module - 1) % MODULE_BACKDROPS.length] ?? MODULE_BACKDROPS[0];
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || startedRef.current) return;
     startedRef.current = true;
-    const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, adaptToDeviceRatio: true });
+    const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, adaptToDeviceRatio: true, alpha: true });
     let disposed = false;
 
     createGameScene(
@@ -117,14 +124,21 @@ export default function GameCanvas() {
   };
 
   return (
-    <main className="game-shell" style={{ "--stage-url": `url(${STAGE_URL})` } as React.CSSProperties}>
+    <main
+      className={`game-shell ${started ? "game-shell--playing" : ""}`}
+      style={{
+        "--stage-url": `url(${STAGE_URL})`,
+        "--module-sky": activeBackdrop[0],
+        "--module-glow": activeBackdrop[1],
+      } as React.CSSProperties}
+    >
       <canvas ref={canvasRef} className="game-canvas" aria-label="Diorama interativo de Princesas do Baile" />
 
       {!started ? (
         <section className="title-card" aria-label="Início de Princesas do Baile">
           <div className="title-card__glow" />
           <img className="title-card__logo" src={LOGO_URL} alt="Logo de Princesas do Baile" />
-          <p className="title-card__eyebrow">JOGO GRATUITO · 40 MONUMENTOS</p>
+          <p className="title-card__eyebrow">JOGO GRATUITO · 170 MONUMENTOS</p>
           <h1>O baile ainda espera.</h1>
           <p className="title-card__copy">
             Gire o olhar, una passagens impossíveis e devolva os convites perdidos à cidade suspensa.
