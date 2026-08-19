@@ -19,6 +19,16 @@ describe("catálogo de monumentos", () => {
     expect(new Set(signatures).size).toBe(170);
   });
 
+  it("atribui uma assinatura própria a cada módulo-capítulo", () => {
+    const chapterEntries = MODULES.map((module) => LEVELS[(module.id - 1) * 10]).filter(Boolean);
+    const identities = chapterEntries.map((level) =>
+      `${level?.symbol}:${level?.moduleTitle}:${level?.subtitle}:${level?.paths.map((path) => `${path.kind ?? "walk"}:${Number(Boolean(path.requiresSwitch))}:${Number(Boolean(path.requiresLight))}`).join(",")}`,
+    );
+    expect(new Set(chapterEntries.map((level) => level?.symbol)).size).toBe(17);
+    expect(new Set(identities).size).toBe(17);
+    expect(new Set(MODULES.map((module) => module.clue)).size).toBe(17);
+  });
+
   it("introduz regras enigmáticas em ordem crescente", () => {
     expect(LEVELS.slice(0, 30).every((level) => level.paths.every((path) => !path.requiresLight))).toBe(true);
     expect(LEVELS.slice(70, 100).some((level) => level.paths.some((path) => path.kind === "portal"))).toBe(true);
